@@ -1,3 +1,8 @@
+param (
+    [switch]$forceInstall,
+    [switch]$skipRestart
+)
+
 # Directory for logs
 $outputDir = "$PSScriptRoot\output"
 $summaryFile = "$outputDir\summary.txt"
@@ -8,6 +13,15 @@ New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
 Clear-Content -Path $summaryFile -ErrorAction SilentlyContinue
 Clear-Content -Path $errorsFile -ErrorAction SilentlyContinue
 Write-Host "Log directory: $outputDir"
+
+# Load config file
+$configFilePath = "$PSScriptRoot\config.json"
+if (-not (Test-Path $configFilePath)) {
+    Write-Host "Error: config.json file not found!" -ForegroundColor Red
+    exit 1
+}
+
+$config = Get-Content -Path $configFilePath | ConvertFrom-Json
 
 # Log helper function
 function Log-Output {
@@ -20,11 +34,11 @@ function Log-Output {
     Add-Content -Path $logFile -Value $formattedMessage
 
     if ($isError) {
-        Add-Content -Path $errorsFile -Value "$appName: $message"
+        Add-Content -Path $errorsFile -Value "$appName : $message"
     }
 
     # Print success/failure into the summary file at the end
-    Add-Content -Path $summaryFile -Value "$appName: $message"
+    Add-Content -Path $summaryFile -Value "$appName : $message"
 }
 
 # Function to install applications from winget, pip, or URL with error handling
@@ -34,7 +48,7 @@ function Install-App {
     $appName = $app.name
 
     try {
-        if (-not $forceInstall -and Is-AppInstalled $appName) {
+        if (-not $forceInstall -and (Is-AppInstalled $appName)) {
             Write-Host "$appName is already installed. Skipping."
             Log-Output -appName $appName -message "$appName is already installed. Skipping."
             return
@@ -74,9 +88,14 @@ function Install-App {
 # Function to summarize all installations at the end
 function Final-Summary {
     Write-Host "Summary of Installations:"
+    if (-not (Test-Path $summaryFile)) { New-Item -ItemType File -Path $summaryFile -Force | Out-Null }
     Get-Content -Path $summaryFile
     Write-Host "Errors (if any):"
-    Get-Content -Path $errorsFile
+    if (Test-Path $errorsFile) {
+        Get-Content -Path $errorsFile
+    } else {
+        Write-Host "No errors encountered."
+    }
 }
 
 # Example of running an installation group
@@ -84,19 +103,24 @@ function Install-Group {
     param ($group)
 
     foreach ($app in $group.applications) {
-        Install-App -app $app -forceInstall $false
+        Install-App -app $app -forceInstall $forceInstall
     }
 
     # Reboot between groups if needed
     if ($group.requiresRestart) {
-        Write-Host "Restarting the system for group: $($group.name)..."
-        shutdown /r /t 5
-        exit
+        if (-not $skipRestart) {
+            Write-Host "Restarting the system for group: $($group.name)..."
+            shutdown /r /t 5
+            exit
+        } else {
+            Write-Host "Skipping restart for group: $($group.name)..."
+        }
     }
 }
 
 # Install each group
 foreach ($group in $config.groups) {
+    Write-Output "Group: $group"
     Install-Group -group $group
 }
 

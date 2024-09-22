@@ -1,0 +1,71 @@
+{
+  "groups": [
+    {
+      "name": "Development Tools",
+      "requiresRestart": true,
+      "applications": [
+        {
+          "name": "Visual Studio",
+          "source": "winget"
+        },
+        {
+          "name": "Visual Studio Code",
+          "source": "winget"
+        },
+        {
+          "name": "Python",
+          "source": "winget"
+        },
+        {
+          "name": "CMake",
+          "source": "pip"
+        },
+        {
+          "name": "Conan",
+          "source": "pip"
+        }
+      ]
+    },
+    {
+      "name": "Utilities",
+      "requiresRestart": false,
+      "applications": [
+        {
+          "name": "7zip",
+          "source": "winget"
+        },
+        {
+          "name": "VLC Media Player",
+          "source": "winget"
+        },
+        {
+          "name": "Docker Desktop",
+          "source": "winget"
+        },
+        {
+          "name": "Windows Subsystem for Linux",
+          "source": "wsl",
+          "distro": "Ubuntu"
+        }
+      ]
+    },
+    {
+      "name": "Media & Communication",
+      "requiresRestart": false,
+      "applications": [
+        {
+          "name": "Spotify",
+          "source": "winget"
+        },
+        {
+          "name": "Slack",
+          "source": "winget"
+        },
+        {
+          "name": "Discord",
+          "source": "winget"
+        }
+      ]
+    }
+  ]
+}
